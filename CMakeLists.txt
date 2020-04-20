@@ -9,6 +9,6 @@ add_subdirectory(include/SFML)
 
 target_link_libraries(attack_of_the_squares
         PUBLIC
-        sfml-graphics sfml-audio sfml-window sfml-system )
+        sfml-graphics sfml-window sfml-system)
 
 target_include_directories(attack_of_the_squares PRIVATE)

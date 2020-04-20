@@ -22,22 +22,46 @@
 #ifndef UNTITLED_ENEMY_H
 #define UNTITLED_ENEMY_H
 
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <ctime>
+#include <sstream>
+
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 
 class Enemy {
 
 private:
-    float posX{};
+    sf::RectangleShape shape;
+
+    int type;
+    float velocityY;
+    sf::Color color;
+    sf::Vector2f size;
     float posY{};
 
 public:
 
     // Constructor
-    Enemy();
+    Enemy(sf::RenderTarget &target, int type);
+
+    virtual ~Enemy();
+
+    // Accessors
+    inline int getPointsGained() const { return (this->type * 2) + 2; };
+
+    inline sf::RectangleShape getShape() const { return this->shape; };
+
 
     // Methods
-    void update();
-    void render();
+    void initAttributes();
 
+    void update();
+
+    void render(sf::RenderTarget &target) const;
 };
 
 

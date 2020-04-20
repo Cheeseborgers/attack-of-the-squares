@@ -28,34 +28,55 @@ void Game::initVariables()
 
     this->endGame = false;
     this->points = 0;
-    this->health = 20;
+    this->enemiesKilled = 0;
+    this->playerHealth = 20;
     this->enemySpawnTimerMax = 20.F;
     this->enemySpawnTimer = this->enemySpawnTimerMax;
     this->maxEnemies = 10;
     this->mouseHeld = false;
 }
+
 //----------------------------------------------------------------------------------------------------------------------
-void Game::initWindow()
-{
+void Game::initWindow() {
     this->videoMode.height = 600;
     this->videoMode.width = 800;
 
-    this->window = std::make_unique<sf::RenderWindow>(this->videoMode, "Window", sf::Style::Titlebar | sf::Style::Close);
+    this->window = std::make_unique<sf::RenderWindow>(this->videoMode, "Window",
+                                                      sf::Style::Titlebar | sf::Style::Close);
 
     this->window->setFramerateLimit(60);
 }
-// ---------------------------------------------------------------------------------------------------------------------
-void Game::initEnemies()
-{
-    this->enemy.setPosition(sf::Vector2f(0.F, 0.F));
-    this->enemy.setSize(sf::Vector2f(100.F, 100.F));
-    this->enemy.setFillColor(sf::Color::Cyan);
+
+// ----------------------------------------------------------------------------------------------
+void Game::initFonts() {
+    if (!this->primaryFont.loadFromFile("fonts/chlorinar/CHLORINR.TTF")) {
+        std::cout << "ERROR::GAME::INITFONTS PRIMARY FONT FAILED TO LOAD\n";
+    }
+
+    if (!this->secondaryFont.loadFromFile("fonts/hemi-head-426/hemi_head_bdit.ttf")) {
+        std::cout << "ERROR::GAME::INITFONTS SECONDARY FONT FAILED TO LOAD\n";
+    }
 }
+
+// --------------------------------------------------------------------------------------------------------------
+void Game::initText() {
+    this->uiText.setFont(this->secondaryFont);
+    this->uiText.setCharacterSize(18);
+    this->uiText.setFillColor(sf::Color::White);
+    this->uiText.setString("NONE");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+void Game::initEnemies() {
+
+}
+
 // Constructor ---------------------------------------------------------------------------------------------------------
-Game::Game()
-{
+Game::Game() {
     this->initVariables();
     this->initWindow();
+    this->initFonts();
+    this->initText();
     this->initEnemies();
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -70,103 +91,138 @@ void Game::updateMousePos()
     this->mousePosWindow = sf::Mouse::getPosition(*this->window);
     this->mousePosView = this->window->mapPixelToCoords(this->mousePosWindow);
 }
-// ---------------------------------------------------------------------------------------------------------------------
-void Game::updateEnemies()
-{
-    /* @ return void
-     * Updates the enemy spawn timer and spawns enemies
-     * when the total amount of enemies is smaller than the max amount
-     * Moves the enemies downwards
-     * Removes the enemies at the edge of the screen //TODO
-     * */
 
+// ---------------------------------------------------------------------------------------------------------------------
+void Game::updateSpawnTimer() {
     // Updating the timer for the enemy spawning
-    if (this->enemies.size() < this->maxEnemies)
-    {
-        if (this->enemySpawnTimer >= this->enemySpawnTimerMax)
-        {
+    if (this->enemies.size() < this->maxEnemies) {
+        if (this->enemySpawnTimer >= this->enemySpawnTimerMax) {
             // Spawn the enemy and reset the timer
             this->spawnEnemy();
             this->enemySpawnTimer = 0.F;
-        }
-        else {
+        } else {
             // Increment timer
             this->enemySpawnTimer += 1.F;
         }
     }
+}
 
-    // Moving and updating the enemies
-    for (size_t i = 0; i < this->enemies.size(); ++i)
-    {
-        bool deleted{false};
+// ---------------------------------------------------------------------------------------------------------------------
+void Game::updateClickedEnemies() {
 
-        this->enemies[i].move(0.F, 5.F);
-
-        // Check enemy hasnt left the screen
-        if (this->enemies[i].getPosition().y > this->window->getSize().y)
-        {
-            deleted = true;
-            this->enemies.erase(this->enemies.begin() + i);
-
-            // Lose health
-            this->health -= 1;
-        }
-    }
+    /* @ return void
+     * Detects a left click event from the mouse, setting the enemy as 'dead' if the mouse
+     *   pointer is within the its shape global bounds.
+     * - Waits for left click
+     * - Detects and toggles left mouse button held check
+     * - If the mouse button is not held, sets the enemy as dead
+     * - Increments player points
+     * */
 
     // Check if clicked upon
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-    {
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         if (!this->mouseHeld) {
 
             this->mouseHeld = true;
 
-            bool deleted{false};
-
-            for (size_t i = 0; i < this->enemies.size() && !deleted; ++i) {
-                if (this->enemies[i].getGlobalBounds().contains(this->mousePosView)) {
-                    // Delete enemy
-                    deleted = true;
-                    this->enemies.erase(this->enemies.begin() + i);
-
+            for (size_t i = 0; i < this->enemies.size(); ++i) {
+                if (this->enemies[i]->getShape().getGlobalBounds().contains(this->mousePosView)) {
                     // Gain points
-                    this->points += 1;
+                    this->points += this->enemies[i]->getPointsGained();
+
+                    // Increment kill counter
+                    this->enemiesKilled += 1;
+
+                    // Delete enemy
+                    this->enemies.erase(this->enemies.begin() + i);
                 }
             }
         }
-    }
-    else {
+    } else {
         this->mouseHeld = false;
     }
 }
+
 // ---------------------------------------------------------------------------------------------------------------------
-void Game::update()
-{
+void Game::updateEnemies() {
+    /* @ return void
+     * - Moves the enemies downwards
+     * - Removes the enemies at the edge of the screen
+     * - Removes 1 point from the players health
+     * */
+
+    // Moving and updating the enemies
+    for (size_t i = 0; i < this->enemies.size(); ++i) {
+        // Move the enemy
+        this->enemies[i]->update();
+
+        // Check if enemy has left the screen
+        if (this->enemies[i]->getShape().getPosition().y > this->window->getSize().y) {
+            // Remove the enemy
+            this->enemies.erase(this->enemies.begin() + i);
+
+            // Player lose playerHealth
+            this->playerHealth -= 1;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+void Game::updateText() {
+    std::stringstream ss;
+
+    ss << "Points: " << this->points << "\n"
+       << "Health: " << this->playerHealth << "\n"
+       << "E: " << this->enemies.size() << "\n"
+       << "Kills: " << this->enemiesKilled << "\n";
+
+    this->uiText.setString(ss.str());
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+void Game::update() {
+    /* @return void
+     * Polls and updates game events and controls playerHealth end game condition
+     * - Poll events
+     * - Updates mouse position
+     * - Updates enemies
+     * - Ends game at zero playerHealth
+     * */
+
     this->pollEvents();
 
-    if (!this->endGame)
-    {
+    if (!this->endGame) {
         this->updateMousePos(); // Update mouse position
+
+        this->updateClickedEnemies();
+
+        this->updateText(); // Update text
+
+        this->updateSpawnTimer(); // Update the enemy spawn timer
 
         this->updateEnemies(); // Update enemies
     }
 
     // End game condition
-    if (this->health <= 0)
-    {
+    if (this->playerHealth <= 0) {
         this->endGame = true;
     }
 }
+
 //----------------------------------------------------------------------------------------------------------------------
-void Game::renderEnemies()
-{
-    for (auto &e : this->enemies)
-    {
-        this->window->draw(e);
+void Game::renderEnemies() {
+    for (auto &e : this->enemies) {
+        e->render(*this->window);
     }
 }
+
 // ---------------------------------------------------------------------------------------------------------------------
-void Game::render()
-{
+void Game::renderText(sf::RenderTarget &target) {
+    target.draw(this->uiText);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+void Game::render() {
     /*
      * @return void
      *  Renders the game objects
@@ -179,6 +235,9 @@ void Game::render()
 
     // Draw game objects
     this->renderEnemies();
+
+    // Draw text
+    this->renderText(*this->window);
 
     // Display frame in window
     this->window->display();
@@ -206,8 +265,7 @@ void Game::pollEvents()
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cert-msc50-cpp"
 //----------------------------------------------------------------------------------------------------------------------
-void Game::spawnEnemy()
-{
+void Game::spawnEnemy() {
     /* @return void
      * Spawns enemies and sets their position and colour
      * -Sets a random position
@@ -215,19 +273,13 @@ void Game::spawnEnemy()
      * -Adds enemy to the enemies vector
      * */
 
-
-    // Set the enemy position
-    this->enemy.setPosition(
-            static_cast<float>(rand() % static_cast<int>(this->window->getSize().x - this->enemy.getSize().x)),
-            0.F
-    );
-
-    // Set fill colour
-    this->enemy.setFillColor(sf::Color::Green);
+    int enemyType = rand() % 5; // enemy type 1-4
 
     // Spawn enemy
-    this->enemies.emplace_back(this->enemy);
-
+    auto e = std::make_unique<Enemy>(*this->window, enemyType);
+    this->enemies.push_back(std::move(e));
 }
+
+
 #pragma clang diagnostic pop
 

@@ -22,14 +22,7 @@
 #ifndef UNTITLED_GAME_H
 #define UNTITLED_GAME_H
 
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <ctime>
-
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-#include <SFML/Graphics/RenderWindow.hpp>
+#include "Enemy.h"
 
 /*
  * Wrapper class that acts as the game engine
@@ -46,22 +39,35 @@ private:
     sf::Vector2i mousePosWindow;
     sf::Vector2f mousePosView;
 
+    // Resources
+    sf::Font primaryFont;
+    sf::Font secondaryFont;
+
+    // Text
+    sf::Text uiText;
+
     // Game logic
     bool endGame{};
     unsigned points{};
-    int health{};
+    int enemiesKilled{};
+    int playerHealth{};
     float enemySpawnTimer{};
     float enemySpawnTimerMax{};
     int maxEnemies{};
     bool mouseHeld{};
 
     // Game objects
-    std::vector<sf::RectangleShape> enemies;
-    sf::RectangleShape enemy;
+    std::vector<std::unique_ptr<Enemy>> enemies;
 
     // Private methods
     void initVariables();
+
     void initWindow();
+
+    void initFonts();
+
+    void initText();
+
     void initEnemies();
 
 public:
@@ -69,16 +75,31 @@ public:
     Game();
 
     // Accessors
-    [[nodiscard]] inline bool isRunning() const {return  window->isOpen(); };
+    [[nodiscard]] inline bool isRunning() const { return window->isOpen(); };
+
     inline bool getEndGame() const { return this->endGame; };
 
     // Methods
     void spawnEnemy();
+
     void pollEvents();
+
     void updateMousePos();
+
+    void updateClickedEnemies();
+
+    void updateSpawnTimer();
+
+    void updateText();
+
     void updateEnemies();
+
     void update();
+
+    void renderText(sf::RenderTarget &target);
+
     void renderEnemies();
+
     void render();
 
 };
