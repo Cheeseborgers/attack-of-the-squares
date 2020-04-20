@@ -1,3 +1,7 @@
+# ignore an entire directory
+/bin/
+.idea/
+
 # Prerequisites
 *.d
 
