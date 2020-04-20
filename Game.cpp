@@ -1,9 +1,9 @@
 //
 //      Created by Goodecheeseburgers on 19/04/2020.
-//      SomeRPG. A C++ console role playing game.
+//      attack-of-the-squares.  A simple C++ / SFML game about squares.
 //      Copyright (C) 2020 - goodecheeseburgers@gmail.com
 //
-//      https://github.com/Cheeseborgers/SomeRPG
+//      https://github.com/Cheeseborgers/attack-of-the-squares
 //
 //      This program is free software: you can redistribute it and/or modify
 //      it under the terms of the GNU General Public License as published by
@@ -41,9 +41,13 @@ void Game::initWindow() {
     this->videoMode.height = 600;
     this->videoMode.width = 800;
 
-    this->window = std::make_unique<sf::RenderWindow>(this->videoMode, "Window",
-                                                      sf::Style::Titlebar | sf::Style::Close);
+    this->window = std::make_unique<sf::RenderWindow>(
+            this->videoMode,
+            "attack-of-the-squares",
+            sf::Style::Titlebar | sf::Style::Close
+    );
 
+    this->window->setVerticalSyncEnabled(false);
     this->window->setFramerateLimit(60);
 }
 

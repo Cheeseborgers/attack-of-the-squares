@@ -1,9 +1,9 @@
 //
 //      Created by Goodecheeseburgers on 20/04/2020.
-//      SomeRPG. A C++ console role playing game.
+//      attack-of-the-squares.  A simple C++ / SFML game about squares.
 //      Copyright (C) 2020 - goodecheeseburgers@gmail.com
 //
-//      https://github.com/Cheeseborgers/SomeRPG
+//      https://github.com/Cheeseborgers/attack-of-the-squares
 //
 //      This program is free software: you can redistribute it and/or modify
 //      it under the terms of the GNU General Public License as published by
